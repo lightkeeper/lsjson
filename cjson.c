@@ -1073,12 +1073,12 @@ encode_object(PyObject *object)
     } else if (PyFloat_Check(object)) {
         double val = PyFloat_AS_DOUBLE(object);
         if (Py_IS_NAN(val)) {
-            return PyString_FromString("NaN");
+            return PyString_FromString("null");
         } else if (Py_IS_INFINITY(val)) {
             if (val > 0) {
-                return PyString_FromString("Infinity");
+                return PyString_FromString("null");
             } else {
-                return PyString_FromString("-Infinity");
+                return PyString_FromString("null");
             }
         } else {
             return PyObject_Repr(object);
@@ -1177,7 +1177,7 @@ JSON_decode(PyObject *self, PyObject *args, PyObject *kwargs)
 
 /* List of functions defined in the module */
 
-static PyMethodDef cjson_methods[] = {
+static PyMethodDef lsjson_methods[] = {
     {"encode", (PyCFunction)JSON_encode,  METH_O,
     PyDoc_STR("encode(object) -> generate the JSON representation for object.")},
 
@@ -1196,31 +1196,31 @@ PyDoc_STRVAR(module_doc,
 "Fast JSON encoder/decoder module."
 );
 
-/* Initialization function for the module (*must* be called initcjson) */
+/* Initialization function for the module (*must* be called initlsjson) */
 
 PyMODINIT_FUNC
-initcjson(void)
+initlsjson(void)
 {
     PyObject *m;
 
-    m = Py_InitModule3("cjson", cjson_methods, module_doc);
+    m = Py_InitModule3("lsjson", lsjson_methods, module_doc);
 
     if (m == NULL)
         return;
 
-    JSON_Error = PyErr_NewException("cjson.Error", NULL, NULL);
+    JSON_Error = PyErr_NewException("lsjson.Error", NULL, NULL);
     if (JSON_Error == NULL)
         return;
     Py_INCREF(JSON_Error);
     PyModule_AddObject(m, "Error", JSON_Error);
 
-    JSON_EncodeError = PyErr_NewException("cjson.EncodeError", JSON_Error, NULL);
+    JSON_EncodeError = PyErr_NewException("lsjson.EncodeError", JSON_Error, NULL);
     if (JSON_EncodeError == NULL)
         return;
     Py_INCREF(JSON_EncodeError);
     PyModule_AddObject(m, "EncodeError", JSON_EncodeError);
 
-    JSON_DecodeError = PyErr_NewException("cjson.DecodeError", JSON_Error, NULL);
+    JSON_DecodeError = PyErr_NewException("lsjson.DecodeError", JSON_Error, NULL);
     if (JSON_DecodeError == NULL)
         return;
     Py_INCREF(JSON_DecodeError);
