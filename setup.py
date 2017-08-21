@@ -6,7 +6,7 @@ __version__ = "1.0.5"
 
 macros = [('MODULE_VERSION', '"%s"' % __version__)]
 
-setup(name         = "python-cjson",
+setup(name         = "lsjson",
       version      = __version__,
       author       = "Dan Pascu",
       author_email = "dan@ag-projects.com",
@@ -25,6 +25,6 @@ setup(name         = "python-cjson",
         "Topic :: Software Development :: Libraries :: Python Modules"
       ],
       ext_modules  = [
-        Extension(name='cjson', sources=['cjson.c'], define_macros=macros)
+        Extension(name='lsjson', sources=['cjson.c'], define_macros=macros)
       ]
 )

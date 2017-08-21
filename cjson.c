@@ -613,6 +613,25 @@ encode_unicode(PyObject *unicode)
     char *p;
 
     static const char *hexdigit = "0123456789abcdef";
+#ifdef Py_UNICODE_WIDE
+    const Py_ssize_t expandsize = 10;
+#else
+    const Py_ssize_t expandsize = 6;
+#endif
+
+    /* Initial allocation is based on the longest-possible unichr
+       escape.
+
+       In wide (UTF-32) builds '\U00xxxxxx' is 10 chars per source
+       unichr, so in this case it's the longest unichr escape. In
+       narrow (UTF-16) builds this is five chars per source unichr
+       since there are two unichrs in the surrogate pair, so in narrow
+       (UTF-16) builds it's not the longest unichr escape.
+
+       In wide or narrow builds '\uxxxx' is 6 chars per source unichr,
+       so in the narrow (UTF-16) build case it's the longest unichr
+       escape.
+    */
 
     s = PyUnicode_AS_UNICODE(unicode);
     size = PyUnicode_GET_SIZE(unicode);
@@ -623,7 +642,7 @@ encode_unicode(PyObject *unicode)
         return NULL;
     }
 
-    repr = PyString_FromStringAndSize(NULL, 2 + 6*size + 1);
+    repr = PyString_FromStringAndSize(NULL, 2 + expandsize*size + 1);
     if (repr == NULL)
         return NULL;
 
@@ -644,15 +663,6 @@ encode_unicode(PyObject *unicode)
 #ifdef Py_UNICODE_WIDE
         /* Map 21-bit characters to '\U00xxxxxx' */
         else if (ch >= 0x10000) {
-            int offset = p - PyString_AS_STRING(repr);
-
-            /* Resize the string if necessary */
-            if (offset + 12 > PyString_GET_SIZE(repr)) {
-                if (_PyString_Resize(&repr, PyString_GET_SIZE(repr) + 100))
-                    return NULL;
-                p = PyString_AS_STRING(repr) + offset;
-            }
-
             *p++ = '\\';
             *p++ = 'U';
             *p++ = hexdigit[(ch >> 28) & 0x0000000F];
@@ -1011,12 +1021,12 @@ encode_object(PyObject *object)
     } else if (PyFloat_Check(object)) {
         double val = PyFloat_AS_DOUBLE(object);
         if (Py_IS_NAN(val)) {
-            return PyString_FromString("NaN");
+            return PyString_FromString("null");
         } else if (Py_IS_INFINITY(val)) {
             if (val > 0) {
-                return PyString_FromString("Infinity");
+                return PyString_FromString("null");
             } else {
-                return PyString_FromString("-Infinity");
+                return PyString_FromString("null");
             }
         } else {
             return PyObject_Str(object);
@@ -1100,7 +1110,7 @@ JSON_decode(PyObject *self, PyObject *args, PyObject *kwargs)
 
 /* List of functions defined in the module */
 
-static PyMethodDef cjson_methods[] = {
+static PyMethodDef lsjson_methods[] = {
     {"encode", (PyCFunction)JSON_encode,  METH_O,
     PyDoc_STR("encode(object) -> generate the JSON representation for object.")},
 
@@ -1119,31 +1129,31 @@ PyDoc_STRVAR(module_doc,
 "Fast JSON encoder/decoder module."
 );
 
-/* Initialization function for the module (*must* be called initcjson) */
+/* Initialization function for the module (*must* be called initlsjson) */
 
 PyMODINIT_FUNC
-initcjson(void)
+initlsjson(void)
 {
     PyObject *m;
 
-    m = Py_InitModule3("cjson", cjson_methods, module_doc);
+    m = Py_InitModule3("lsjson", lsjson_methods, module_doc);
 
     if (m == NULL)
         return;
 
-    JSON_Error = PyErr_NewException("cjson.Error", NULL, NULL);
+    JSON_Error = PyErr_NewException("lsjson.Error", NULL, NULL);
     if (JSON_Error == NULL)
         return;
     Py_INCREF(JSON_Error);
     PyModule_AddObject(m, "Error", JSON_Error);
 
-    JSON_EncodeError = PyErr_NewException("cjson.EncodeError", JSON_Error, NULL);
+    JSON_EncodeError = PyErr_NewException("lsjson.EncodeError", JSON_Error, NULL);
     if (JSON_EncodeError == NULL)
         return;
     Py_INCREF(JSON_EncodeError);
     PyModule_AddObject(m, "EncodeError", JSON_EncodeError);
 
-    JSON_DecodeError = PyErr_NewException("cjson.DecodeError", JSON_Error, NULL);
+    JSON_DecodeError = PyErr_NewException("lsjson.DecodeError", JSON_Error, NULL);
     if (JSON_DecodeError == NULL)
         return;
     Py_INCREF(JSON_DecodeError);
